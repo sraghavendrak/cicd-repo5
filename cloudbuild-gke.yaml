@@ -9,21 +9,41 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push','gcr.io/${_PROJECT_ID}/${_CINAME}:${_VERSION}']
 
-# kubectl set image deployment/cicd-app-1 runimage-sha256-1=gcr.io/${_PROJECT_ID}/${_CINAME}:${_VERSION}
+# Deploy the newly built image
 - name: 'gcr.io/cloud-builders/kubectl'
   args:
   - 'set'
   - 'image'
   - 'deployment/cicd-app-1'
   - 'runimage-sha256-1=gcr.io/${_PROJECT_ID}/${_CINAME}:${_VERSION}'
-  env: 
+  env:
   - 'CLOUDSDK_COMPUTE_ZONE=us-central1-c'
   - 'CLOUDSDK_CONTAINER_CLUSTER=cicd-cluster'
+
+# Optional: Rollback to a previous image version
+- name: 'gcr.io/cloud-builders/kubectl'
+  args:
+  - 'set'
+  - 'image'
+  - 'deployment/cicd-app-1'
+  - 'runimage-sha256-1=gcr.io/${_PROJECT_ID}/${_CINAME}:${_ROLLBACK_VERSION}'
+  env:
+  - 'CLOUDSDK_COMPUTE_ZONE=us-central1-c'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=cicd-cluster'
+  # Only run this step if _ROLLBACK_VERSION is provided
+  entrypoint: 'sh'
+  args:
+  - '-c'
+  - |
+    if [ ! -z "${_ROLLBACK_VERSION}" ]; then
+      kubectl set image deployment/cicd-app-1 runimage-sha256-1=gcr.io/${_PROJECT_ID}/${_CINAME}:${_ROLLBACK_VERSION};
+    fi
 
 substitutions:
   _PROJECT_ID : gcp-devops-432119
   _CINAME : gke-image
   _VERSION : v3.0
+  _ROLLBACK_VERSION : 'v2.0'  # Set this to the version you want to rollback to
 
 options:
   logging : CLOUD_LOGGING_ONLY
