@@ -42,8 +42,8 @@ steps:
 substitutions:
   _PROJECT_ID : gcp-devops-432119
   _CINAME : gke-image
-  _VERSION : v3.0
-  _ROLLBACK_VERSION : 'v2.0'  # Set this to the version you want to rollback to
+  _VERSION : v4.0
+  _ROLLBACK_VERSION : ''  # Set this to the version you want to rollback to
 
 options:
   logging : CLOUD_LOGGING_ONLY
